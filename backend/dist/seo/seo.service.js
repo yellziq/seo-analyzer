@@ -28,13 +28,13 @@ let SeoService = class SeoService {
     }
     async analyze(payload) {
         if (!payload.url && !payload.html) {
-            throw new common_1.BadRequestException('Provide either url or html.');
+            throw new common_1.BadRequestException('Передайте URL или HTML.');
         }
         const html = payload.url
             ? await this.scraperService.fetchHtml(payload.url)
             : payload.html;
         if (!html) {
-            throw new common_1.BadRequestException('HTML content is empty.');
+            throw new common_1.BadRequestException('HTML-контент пустой.');
         }
         const parsedData = this.parserService.parse(html, payload.url);
         const { score, checks } = this.scorerService.score(parsedData);

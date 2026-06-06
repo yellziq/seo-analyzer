@@ -19,10 +19,10 @@ let ScraperService = class ScraperService {
             parsedUrl = new URL(url);
         }
         catch {
-            throw new common_1.BadRequestException('Invalid URL.');
+            throw new common_1.BadRequestException('Некорректный URL.');
         }
         if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
-            throw new common_1.BadRequestException('URL must use HTTP or HTTPS.');
+            throw new common_1.BadRequestException('URL должен использовать HTTP или HTTPS.');
         }
         try {
             const response = await axios_1.default.get(parsedUrl.toString(), {
@@ -31,7 +31,7 @@ let ScraperService = class ScraperService {
                 validateStatus: () => true,
             });
             if (response.status < 200 || response.status >= 300) {
-                throw new common_1.BadGatewayException(`Failed to fetch URL. Received status ${response.status}.`);
+                throw new common_1.BadGatewayException(`Не удалось загрузить URL. Получен статус ${response.status}.`);
             }
             return response.data;
         }
@@ -42,9 +42,9 @@ let ScraperService = class ScraperService {
             }
             const axiosError = error;
             if (axiosError.code === 'ECONNABORTED') {
-                throw new common_1.GatewayTimeoutException('URL fetch timed out.');
+                throw new common_1.GatewayTimeoutException('Истекло время ожидания загрузки URL.');
             }
-            throw new common_1.BadGatewayException('Failed to fetch URL.');
+            throw new common_1.BadGatewayException('Не удалось загрузить URL.');
         }
     }
 };

@@ -14,11 +14,11 @@ export class ScraperService {
     try {
       parsedUrl = new URL(url);
     } catch {
-      throw new BadRequestException('Invalid URL.');
+      throw new BadRequestException('Некорректный URL.');
     }
 
     if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
-      throw new BadRequestException('URL must use HTTP or HTTPS.');
+      throw new BadRequestException('URL должен использовать HTTP или HTTPS.');
     }
 
     try {
@@ -30,7 +30,7 @@ export class ScraperService {
 
       if (response.status < 200 || response.status >= 300) {
         throw new BadGatewayException(
-          `Failed to fetch URL. Received status ${response.status}.`,
+          `Не удалось загрузить URL. Получен статус ${response.status}.`,
         );
       }
 
@@ -46,10 +46,10 @@ export class ScraperService {
       const axiosError = error as AxiosError;
 
       if (axiosError.code === 'ECONNABORTED') {
-        throw new GatewayTimeoutException('URL fetch timed out.');
+        throw new GatewayTimeoutException('Истекло время ожидания загрузки URL.');
       }
 
-      throw new BadGatewayException('Failed to fetch URL.');
+      throw new BadGatewayException('Не удалось загрузить URL.');
     }
   }
 }

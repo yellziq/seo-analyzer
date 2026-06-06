@@ -11,7 +11,7 @@ export class AiService {
     const apiKey = this.configService.get<string>('DEEPSEEK_API_KEY');
 
     if (!apiKey) {
-      return 'DeepSeek review is unavailable because DEEPSEEK_API_KEY is not configured.';
+      return 'AI-обзор DeepSeek недоступен, потому что DEEPSEEK_API_KEY не настроен.';
     }
 
     const client = new OpenAI({
@@ -26,7 +26,7 @@ export class AiService {
           {
             role: 'system',
             content:
-              'You are an SEO expert. Analyze the provided SEO check results and write a short 3-4 sentence review with the most important recommendations.',
+              'Ты SEO-эксперт. Проанализируй переданные результаты SEO-проверок и напиши короткий обзор на русском языке из 3-4 предложений с самыми важными рекомендациями.',
           },
           {
             role: 'user',
@@ -37,12 +37,12 @@ export class AiService {
 
       return (
         response.choices[0]?.message?.content?.trim() ??
-        'DeepSeek did not return a review.'
+        'DeepSeek не вернул обзор.'
       );
     } catch (error: unknown) {
       const message =
-        error instanceof Error ? error.message : 'Unknown DeepSeek API error.';
-      return `DeepSeek review request failed: ${message}`;
+        error instanceof Error ? error.message : 'Неизвестная ошибка DeepSeek API.';
+      return `Запрос AI-обзора DeepSeek завершился ошибкой: ${message}`;
     }
   }
 }

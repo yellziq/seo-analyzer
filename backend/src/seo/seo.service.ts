@@ -22,7 +22,7 @@ export class SeoService {
 
   async analyze(payload: AnalyzeSeoDto): Promise<SeoAnalyzeResult> {
     if (!payload.url && !payload.html) {
-      throw new BadRequestException('Provide either url or html.');
+      throw new BadRequestException('Передайте URL или HTML.');
     }
 
     const html = payload.url
@@ -30,7 +30,7 @@ export class SeoService {
       : payload.html;
 
     if (!html) {
-      throw new BadRequestException('HTML content is empty.');
+      throw new BadRequestException('HTML-контент пустой.');
     }
 
     const parsedData = this.parserService.parse(html, payload.url);

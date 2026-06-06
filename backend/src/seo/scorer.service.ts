@@ -57,7 +57,7 @@ export class ScorerService {
       return {
         tag: 'Title',
         status: 'Failed',
-        description: 'Title is missing.',
+        description: 'Тег title отсутствует.',
       };
     }
 
@@ -65,7 +65,7 @@ export class ScorerService {
       return {
         tag: 'Title',
         status: 'Failed',
-        description: `Title length is ${length} characters, which is too long for search results.`,
+        description: `Длина title составляет ${length} символов. Это слишком много для поисковой выдачи.`,
       };
     }
 
@@ -73,7 +73,7 @@ export class ScorerService {
       return {
         tag: 'Title',
         status: 'Passed',
-        description: `Title length is ${length} characters, which is within the recommended range.`,
+        description: `Длина title составляет ${length} символов, это в рекомендуемом диапазоне.`,
       };
     }
 
@@ -81,14 +81,14 @@ export class ScorerService {
       return {
         tag: 'Title',
         status: 'Warning',
-        description: `Title length is ${length} characters. It may be truncated in search results.`,
+        description: `Длина title составляет ${length} символов. Он может обрезаться в поисковой выдаче.`,
       };
     }
 
     return {
       tag: 'Title',
       status: 'Warning',
-      description: `Title length is ${length} characters, which is shorter than the recommended minimum.`,
+      description: `Длина title составляет ${length} символов, это меньше рекомендуемого минимума.`,
     };
   }
 
@@ -99,7 +99,7 @@ export class ScorerService {
       return {
         tag: 'Meta Description',
         status: 'Failed',
-        description: 'Meta description is missing.',
+        description: 'Meta description отсутствует.',
       };
     }
 
@@ -107,7 +107,7 @@ export class ScorerService {
       return {
         tag: 'Meta Description',
         status: 'Passed',
-        description: `Meta description length is ${length} characters.`,
+        description: `Длина meta description составляет ${length} символов.`,
       };
     }
 
@@ -115,14 +115,14 @@ export class ScorerService {
       return {
         tag: 'Meta Description',
         status: 'Warning',
-        description: `Meta description is too short at ${length} characters. Add more useful summary text.`,
+        description: `Meta description слишком короткий: ${length} символов. Добавьте более полезное описание страницы.`,
       };
     }
 
     return {
       tag: 'Meta Description',
       status: 'Warning',
-      description: `Meta description is too long at ${length} characters and may be truncated.`,
+      description: `Meta description слишком длинный: ${length} символов, он может обрезаться.`,
     };
   }
 
@@ -131,7 +131,7 @@ export class ScorerService {
       return {
         tag: 'H1',
         status: 'Passed',
-        description: `One H1 is present: "${data.h1.firstValue}".`,
+        description: `На странице найден один H1: "${data.h1.firstValue}".`,
       };
     }
 
@@ -139,14 +139,14 @@ export class ScorerService {
       return {
         tag: 'H1',
         status: 'Warning',
-        description: `${data.h1.count} H1 tags were found. Use one primary H1.`,
+        description: `Найдено ${data.h1.count} тегов H1. Лучше использовать один основной H1.`,
       };
     }
 
     return {
       tag: 'H1',
       status: 'Failed',
-      description: 'No H1 tag was found.',
+      description: 'Тег H1 не найден.',
     };
   }
 
@@ -155,14 +155,14 @@ export class ScorerService {
       return {
         tag: 'H2-H6',
         status: 'Passed',
-        description: `${data.headings.count} secondary heading tags were found.`,
+        description: `Найдено дополнительных заголовков H2-H6: ${data.headings.count}.`,
       };
     }
 
     return {
       tag: 'H2-H6',
       status: 'Warning',
-      description: 'No H2-H6 heading tags were found.',
+      description: 'Заголовки H2-H6 не найдены.',
     };
   }
 
@@ -171,14 +171,14 @@ export class ScorerService {
       return {
         tag: 'Canonical',
         status: 'Passed',
-        description: `Canonical URL is set to ${data.canonical.href}.`,
+        description: `Canonical URL установлен: ${data.canonical.href}.`,
       };
     }
 
     return {
       tag: 'Canonical',
       status: 'Failed',
-      description: 'Canonical tag is missing.',
+      description: 'Тег canonical отсутствует.',
     };
   }
 
@@ -189,7 +189,7 @@ export class ScorerService {
       return {
         tag: 'Robots Meta',
         status: 'Warning',
-        description: 'Robots meta tag is missing.',
+        description: 'Meta-тег robots отсутствует.',
       };
     }
 
@@ -197,7 +197,7 @@ export class ScorerService {
       return {
         tag: 'Robots Meta',
         status: 'Failed',
-        description: 'Robots meta tag contains noindex.',
+        description: 'Meta-тег robots содержит noindex.',
       };
     }
 
@@ -205,14 +205,14 @@ export class ScorerService {
       return {
         tag: 'Robots Meta',
         status: 'Passed',
-        description: `Robots meta tag allows indexing: "${data.robotsMeta.content}".`,
+        description: `Meta-тег robots разрешает индексацию: "${data.robotsMeta.content}".`,
       };
     }
 
     return {
       tag: 'Robots Meta',
       status: 'Warning',
-      description: `Robots meta tag exists, but indexing intent is unclear: "${data.robotsMeta.content}".`,
+      description: `Meta-тег robots есть, но намерение индексации неясно: "${data.robotsMeta.content}".`,
     };
   }
 
@@ -224,7 +224,7 @@ export class ScorerService {
       return {
         tag: 'Open Graph',
         status: 'Passed',
-        description: 'og:title, og:description, and og:image are present.',
+        description: 'og:title, og:description и og:image присутствуют.',
       };
     }
 
@@ -232,14 +232,14 @@ export class ScorerService {
       return {
         tag: 'Open Graph',
         status: 'Warning',
-        description: `${presentCount} of 3 required Open Graph tags are present.`,
+        description: `Найдено ${presentCount} из 3 обязательных Open Graph тегов.`,
       };
     }
 
     return {
       tag: 'Open Graph',
       status: 'Failed',
-      description: 'No required Open Graph tags were found.',
+      description: 'Обязательные Open Graph теги не найдены.',
     };
   }
 
@@ -250,7 +250,7 @@ export class ScorerService {
       return {
         tag: 'Images Alt',
         status: 'Passed',
-        description: 'No images found, so the image alt check is not applicable.',
+        description: 'Изображения не найдены, поэтому проверка alt не применяется.',
       };
     }
 
@@ -258,7 +258,7 @@ export class ScorerService {
       return {
         tag: 'Images Alt',
         status: 'Passed',
-        description: 'All images have alt attributes.',
+        description: 'У всех изображений есть атрибут alt.',
       };
     }
 
@@ -266,14 +266,14 @@ export class ScorerService {
       return {
         tag: 'Images Alt',
         status: 'Failed',
-        description: `${withoutAltCount} of ${totalCount} images are missing alt attributes.`,
+        description: `${withoutAltCount} из ${totalCount} изображений не имеют атрибута alt.`,
       };
     }
 
     return {
       tag: 'Images Alt',
       status: 'Warning',
-      description: `${withoutAltCount} of ${totalCount} images are missing alt attributes.`,
+      description: `${withoutAltCount} из ${totalCount} изображений не имеют атрибута alt.`,
     };
   }
 
@@ -282,14 +282,14 @@ export class ScorerService {
       return {
         tag: 'HTTPS',
         status: 'Passed',
-        description: 'The analyzed URL uses HTTPS.',
+        description: 'Анализируемый URL использует HTTPS.',
       };
     }
 
     return {
       tag: 'HTTPS',
       status: 'Failed',
-      description: 'The analyzed URL does not use HTTPS.',
+      description: 'Анализируемый URL не использует HTTPS.',
     };
   }
 
@@ -300,7 +300,7 @@ export class ScorerService {
       return {
         tag: 'URL Length',
         status: 'Passed',
-        description: 'No URL was provided, so the URL length check is not applicable.',
+        description: 'URL не был передан, поэтому проверка длины URL не применяется.',
       };
     }
 
@@ -308,7 +308,7 @@ export class ScorerService {
       return {
         tag: 'URL Length',
         status: 'Passed',
-        description: `URL length is ${length} characters, which is concise for users and search engines.`,
+        description: `Длина URL составляет ${length} символов. URL достаточно краткий для пользователей и поисковых систем.`,
       };
     }
 
@@ -316,14 +316,14 @@ export class ScorerService {
       return {
         tag: 'URL Length',
         status: 'Warning',
-        description: `URL length is ${length} characters. Shorter URLs are usually easier to read and share.`,
+        description: `Длина URL составляет ${length} символов. Более короткие URL обычно легче читать и передавать.`,
       };
     }
 
     return {
       tag: 'URL Length',
       status: 'Failed',
-      description: `URL length is ${length} characters, which is too long for a clean SEO-friendly URL.`,
+      description: `Длина URL составляет ${length} символов. Это слишком длинно для чистого SEO-friendly URL.`,
     };
   }
 
@@ -332,7 +332,7 @@ export class ScorerService {
       return {
         tag: 'HTML Lang',
         status: 'Passed',
-        description: `The html lang attribute is set to "${data.htmlLang.value}".`,
+        description: `Атрибут html lang установлен: "${data.htmlLang.value}".`,
       };
     }
 
@@ -340,7 +340,7 @@ export class ScorerService {
       tag: 'HTML Lang',
       status: 'Warning',
       description:
-        'The html lang attribute is missing. Add it to help search engines and assistive technologies understand the page language.',
+        'Атрибут html lang отсутствует. Добавьте его, чтобы поисковые системы и вспомогательные технологии понимали язык страницы.',
     };
   }
 
@@ -352,7 +352,7 @@ export class ScorerService {
       return {
         tag: 'Text Content',
         status: 'Failed',
-        description: 'No visible text content was found on the page.',
+        description: 'На странице не найден видимый текстовый контент.',
       };
     }
 
@@ -360,14 +360,14 @@ export class ScorerService {
       return {
         tag: 'Text Content',
         status: 'Warning',
-        description: `Visible text length is ${length} characters and text-to-code ratio is ${ratioPercent}%. Add more useful indexable content.`,
+        description: `Длина видимого текста: ${length} символов, соотношение текста к коду: ${ratioPercent}%. Добавьте больше полезного индексируемого контента.`,
       };
     }
 
     return {
       tag: 'Text Content',
       status: 'Passed',
-      description: `Visible text length is ${length} characters with a ${ratioPercent}% text-to-code ratio.`,
+      description: `Длина видимого текста: ${length} символов, соотношение текста к коду: ${ratioPercent}%.`,
     };
   }
 }
