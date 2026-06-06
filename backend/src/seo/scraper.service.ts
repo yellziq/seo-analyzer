@@ -24,7 +24,15 @@ export class ScraperService {
     try {
       const response = await axios.get<string>(parsedUrl.toString(), {
         responseType: 'text',
-        timeout: 10000,
+        timeout: 30000,
+        maxRedirects: 5,
+        headers: {
+          Accept:
+            'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          'Accept-Language': 'ru-RU,ru;q=0.9,en;q=0.8',
+          'User-Agent':
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0 Safari/537.36 SEOAnalyzer/1.0',
+        },
         validateStatus: () => true,
       });
 
@@ -45,11 +53,19 @@ export class ScraperService {
 
       const axiosError = error as AxiosError;
 
-      if (axiosError.code === 'ECONNABORTED') {
-        throw new GatewayTimeoutException('Истекло время ожидания загрузки URL.');
+      if (
+        axiosError.code === 'ECONNABORTED' ||
+        axiosError.code === 'ETIMEDOUT' ||
+        axiosError.code === 'ECONNRESET'
+      ) {
+        throw new GatewayTimeoutException(
+          'Истекло время ожидания загрузки URL. Попробуйте другой адрес или вставьте HTML-код страницы вручную.',
+        );
       }
 
-      throw new BadGatewayException('Не удалось загрузить URL.');
+      throw new BadGatewayException(
+        'Не удалось загрузить URL. Сайт может блокировать серверные запросы.',
+      );
     }
   }
 }
