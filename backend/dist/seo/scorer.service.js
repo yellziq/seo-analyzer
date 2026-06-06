@@ -23,6 +23,18 @@ let ScorerService = class ScorerService {
             this.scoreUrlLength(data),
             this.scoreHtmlLang(data),
             this.scoreTextContent(data),
+            this.scoreViewport(data),
+            this.scoreFavicon(data),
+            this.scoreRobotsTxt(data),
+            this.scoreSitemapXml(data),
+            this.scoreSchemaOrg(data),
+            this.scoreBrokenLinks(data),
+            this.scoreLinkBalance(data),
+            this.scoreHtmlSize(data),
+            this.scoreWordCount(data),
+            this.scoreHreflang(data),
+            this.scoreDuplicateHeadings(data),
+            this.scoreLargeImages(data),
         ];
         const penalty = checks.reduce((total, check) => {
             if (check.status === 'Warning') {
@@ -311,6 +323,242 @@ let ScorerService = class ScorerService {
             tag: 'Text Content',
             status: 'Passed',
             description: `Длина видимого текста: ${length} символов, соотношение текста к коду: ${ratioPercent}%.`,
+        };
+    }
+    scoreViewport(data) {
+        const content = data.viewport.content?.toLowerCase();
+        if (!content) {
+            return {
+                tag: 'Viewport',
+                status: 'Failed',
+                description: 'Meta viewport отсутствует. Добавьте его для корректной мобильной индексации.',
+            };
+        }
+        if (content.includes('width=device-width')) {
+            return {
+                tag: 'Viewport',
+                status: 'Passed',
+                description: `Meta viewport настроен: "${data.viewport.content}".`,
+            };
+        }
+        return {
+            tag: 'Viewport',
+            status: 'Warning',
+            description: `Meta viewport есть, но лучше добавить width=device-width: "${data.viewport.content}".`,
+        };
+    }
+    scoreFavicon(data) {
+        if (data.favicon.href) {
+            return {
+                tag: 'Favicon',
+                status: 'Passed',
+                description: `Favicon найден: ${data.favicon.href}.`,
+            };
+        }
+        return {
+            tag: 'Favicon',
+            status: 'Warning',
+            description: 'Favicon не найден. Добавьте иконку сайта для лучшего отображения во вкладках и выдаче.',
+        };
+    }
+    scoreRobotsTxt(data) {
+        if (data.technicalFiles.robotsTxt === null) {
+            return {
+                tag: 'Robots.txt',
+                status: 'Passed',
+                description: 'URL не был передан, поэтому robots.txt не проверялся.',
+            };
+        }
+        if (data.technicalFiles.robotsTxt) {
+            return {
+                tag: 'Robots.txt',
+                status: 'Passed',
+                description: 'Файл robots.txt доступен.',
+            };
+        }
+        return {
+            tag: 'Robots.txt',
+            status: 'Warning',
+            description: 'Файл robots.txt не найден или недоступен.',
+        };
+    }
+    scoreSitemapXml(data) {
+        if (data.technicalFiles.sitemapXml === null) {
+            return {
+                tag: 'Sitemap.xml',
+                status: 'Passed',
+                description: 'URL не был передан, поэтому sitemap.xml не проверялся.',
+            };
+        }
+        if (data.technicalFiles.sitemapXml) {
+            return {
+                tag: 'Sitemap.xml',
+                status: 'Passed',
+                description: 'Файл sitemap.xml доступен.',
+            };
+        }
+        return {
+            tag: 'Sitemap.xml',
+            status: 'Warning',
+            description: 'Файл sitemap.xml не найден или недоступен. Добавьте карту сайта для ускорения индексации.',
+        };
+    }
+    scoreSchemaOrg(data) {
+        if (data.schemaOrg.count > 0) {
+            return {
+                tag: 'Schema.org',
+                status: 'Passed',
+                description: `Найдено JSON-LD Schema.org блоков: ${data.schemaOrg.count}.`,
+            };
+        }
+        return {
+            tag: 'Schema.org',
+            status: 'Warning',
+            description: 'Schema.org JSON-LD разметка не найдена. Добавьте структурированные данные для расширенных сниппетов.',
+        };
+    }
+    scoreBrokenLinks(data) {
+        const { checkedCount, brokenCount } = data.brokenLinks;
+        if (checkedCount === 0) {
+            return {
+                tag: 'Broken Links',
+                status: 'Passed',
+                description: 'Ссылки не проверялись: URL не был передан или ссылок на странице нет.',
+            };
+        }
+        if (brokenCount === 0) {
+            return {
+                tag: 'Broken Links',
+                status: 'Passed',
+                description: `Проверено ссылок: ${checkedCount}. Битые ссылки не найдены.`,
+            };
+        }
+        if (brokenCount <= 2) {
+            return {
+                tag: 'Broken Links',
+                status: 'Warning',
+                description: `Проверено ссылок: ${checkedCount}. Найдено битых ссылок: ${brokenCount}. Исправьте или удалите их.`,
+            };
+        }
+        return {
+            tag: 'Broken Links',
+            status: 'Failed',
+            description: `Проверено ссылок: ${checkedCount}. Найдено много битых ссылок: ${brokenCount}. Это ухудшает UX и SEO.`,
+        };
+    }
+    scoreLinkBalance(data) {
+        const { totalCount, internalCount, externalCount } = data.links;
+        if (totalCount === 0) {
+            return {
+                tag: 'Links',
+                status: 'Warning',
+                description: 'На странице не найдено ссылок. Добавьте внутренние ссылки для улучшения навигации и перелинковки.',
+            };
+        }
+        if (internalCount === 0) {
+            return {
+                tag: 'Links',
+                status: 'Warning',
+                description: `Найдено ссылок: ${totalCount}, но внутренних ссылок нет. Добавьте внутреннюю перелинковку.`,
+            };
+        }
+        return {
+            tag: 'Links',
+            status: 'Passed',
+            description: `Найдено ссылок: ${totalCount}. Внутренних: ${internalCount}, внешних: ${externalCount}.`,
+        };
+    }
+    scoreHtmlSize(data) {
+        const sizeKb = Math.round(data.textContent.htmlLength / 1024);
+        if (sizeKb <= 150) {
+            return {
+                tag: 'HTML Size',
+                status: 'Passed',
+                description: `Размер HTML: ${sizeKb} KB. Страница достаточно легкая.`,
+            };
+        }
+        if (sizeKb <= 300) {
+            return {
+                tag: 'HTML Size',
+                status: 'Warning',
+                description: `Размер HTML: ${sizeKb} KB. Проверьте лишнюю разметку и inline-код.`,
+            };
+        }
+        return {
+            tag: 'HTML Size',
+            status: 'Failed',
+            description: `Размер HTML: ${sizeKb} KB. Страница слишком тяжелая, стоит уменьшить объем кода.`,
+        };
+    }
+    scoreWordCount(data) {
+        const { wordCount } = data.textContent;
+        if (wordCount >= 300) {
+            return {
+                tag: 'Word Count',
+                status: 'Passed',
+                description: `Количество слов: ${wordCount}. Контента достаточно для базовой SEO-оценки.`,
+            };
+        }
+        if (wordCount >= 100) {
+            return {
+                tag: 'Word Count',
+                status: 'Warning',
+                description: `Количество слов: ${wordCount}. Для информационных страниц лучше добавить больше полезного текста.`,
+            };
+        }
+        return {
+            tag: 'Word Count',
+            status: 'Failed',
+            description: `Количество слов: ${wordCount}. На странице слишком мало текстового контента.`,
+        };
+    }
+    scoreHreflang(data) {
+        if (data.hreflang.count > 0) {
+            return {
+                tag: 'Hreflang',
+                status: 'Passed',
+                description: `Найдено hreflang-ссылок: ${data.hreflang.count}.`,
+            };
+        }
+        return {
+            tag: 'Hreflang',
+            status: 'Warning',
+            description: 'Hreflang не найден. Если сайт многоязычный, добавьте hreflang для правильной региональной выдачи.',
+        };
+    }
+    scoreDuplicateHeadings(data) {
+        if (data.duplicateHeadings.count === 0) {
+            return {
+                tag: 'Duplicate Headings',
+                status: 'Passed',
+                description: 'Дубликаты заголовков H1-H6 не найдены.',
+            };
+        }
+        return {
+            tag: 'Duplicate Headings',
+            status: 'Warning',
+            description: `Найдено повторяющихся заголовков: ${data.duplicateHeadings.count}. Проверьте: ${data.duplicateHeadings.values.join(', ')}.`,
+        };
+    }
+    scoreLargeImages(data) {
+        if (data.images.totalCount === 0) {
+            return {
+                tag: 'Large Images',
+                status: 'Passed',
+                description: 'Изображения не найдены, поэтому размер изображений не проверяется.',
+            };
+        }
+        if (data.imageSize.oversizedCount === 0) {
+            return {
+                tag: 'Large Images',
+                status: 'Passed',
+                description: 'Слишком крупные изображения не найдены.',
+            };
+        }
+        return {
+            tag: 'Large Images',
+            status: 'Warning',
+            description: `Найдено крупных изображений: ${data.imageSize.oversizedCount}. Сожмите изображения или используйте современные форматы WebP/AVIF.`,
         };
     }
 };

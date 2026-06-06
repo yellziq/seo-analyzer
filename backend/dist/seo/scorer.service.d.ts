@@ -23,4 +23,16 @@ export declare class ScorerService {
     private scoreUrlLength;
     private scoreHtmlLang;
     private scoreTextContent;
+    private scoreViewport;
+    private scoreFavicon;
+    private scoreRobotsTxt;
+    private scoreSitemapXml;
+    private scoreSchemaOrg;
+    private scoreBrokenLinks;
+    private scoreLinkBalance;
+    private scoreHtmlSize;
+    private scoreWordCount;
+    private scoreHreflang;
+    private scoreDuplicateHeadings;
+    private scoreLargeImages;
 }

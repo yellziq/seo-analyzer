@@ -55,6 +55,11 @@ let ParserService = class ParserService {
         const textContent = this.extractTextContent($);
         const htmlLength = html.length;
         const textToHtmlRatio = htmlLength > 0 ? textContent.length / htmlLength : 0;
+        const baseUrl = url ? new URL(url) : null;
+        const links = this.extractLinks($, baseUrl);
+        const imageUrls = this.extractImageUrls($, baseUrl);
+        const duplicateHeadings = this.extractDuplicateHeadings($);
+        const oversizedImagesByAttributes = this.countOversizedImagesByAttributes($);
         const totalImages = $('img').length;
         const imagesWithoutAlt = $('img')
             .toArray()
@@ -104,6 +109,35 @@ let ParserService = class ParserService {
                 length: textContent.length,
                 htmlLength,
                 ratio: Number(textToHtmlRatio.toFixed(3)),
+                wordCount: this.countWords(textContent),
+            },
+            viewport: {
+                content: this.cleanText($('meta[name="viewport"]').attr('content')),
+            },
+            favicon: {
+                href: this.cleanText($('link[rel="icon"], link[rel="shortcut icon"], link[rel="apple-touch-icon"]')
+                    .first()
+                    .attr('href')),
+            },
+            schemaOrg: {
+                count: $('script[type="application/ld+json"]').length,
+            },
+            hreflang: {
+                count: $('link[rel="alternate"][hreflang]').length,
+            },
+            links,
+            duplicateHeadings,
+            imageSize: {
+                oversizedCount: oversizedImagesByAttributes,
+                urls: imageUrls,
+            },
+            technicalFiles: {
+                robotsTxt: null,
+                sitemapXml: null,
+            },
+            brokenLinks: {
+                checkedCount: 0,
+                brokenCount: 0,
             },
             isHttps: url ? new URL(url).protocol === 'https:' : false,
         };
@@ -116,6 +150,75 @@ let ParserService = class ParserService {
         const body = $('body').clone();
         body.find('script, style, noscript, svg').remove();
         return body.text().trim().replace(/\s+/g, ' ');
+    }
+    countWords(text) {
+        if (!text) {
+            return 0;
+        }
+        return text.split(/\s+/).filter(Boolean).length;
+    }
+    extractLinks($, baseUrl) {
+        const urls = $('a[href]')
+            .toArray()
+            .map((link) => $(link).attr('href'))
+            .filter((href) => Boolean(href))
+            .filter((href) => !href.startsWith('#') && !href.startsWith('mailto:') && !href.startsWith('tel:'))
+            .map((href) => this.resolveUrl(href, baseUrl))
+            .filter((href) => Boolean(href));
+        const internalCount = urls.filter((href) => {
+            if (!baseUrl) {
+                return !/^https?:\/\//i.test(href);
+            }
+            return new URL(href).hostname === baseUrl.hostname;
+        }).length;
+        return {
+            totalCount: urls.length,
+            internalCount,
+            externalCount: urls.length - internalCount,
+            urls,
+        };
+    }
+    resolveUrl(href, baseUrl) {
+        try {
+            return baseUrl ? new URL(href, baseUrl).toString() : href;
+        }
+        catch {
+            return null;
+        }
+    }
+    extractDuplicateHeadings($) {
+        const headings = $('h1, h2, h3, h4, h5, h6')
+            .toArray()
+            .map((heading) => this.cleanText($(heading).text())?.toLowerCase())
+            .filter((heading) => Boolean(heading));
+        const counts = new Map();
+        headings.forEach((heading) => {
+            counts.set(heading, (counts.get(heading) ?? 0) + 1);
+        });
+        const values = Array.from(counts.entries())
+            .filter(([, count]) => count > 1)
+            .map(([heading]) => heading);
+        return {
+            count: values.length,
+            values,
+        };
+    }
+    countOversizedImagesByAttributes($) {
+        return $('img')
+            .toArray()
+            .filter((image) => {
+            const width = Number($(image).attr('width') ?? 0);
+            const height = Number($(image).attr('height') ?? 0);
+            return width > 2000 || height > 2000;
+        }).length;
+    }
+    extractImageUrls($, baseUrl) {
+        return $('img[src]')
+            .toArray()
+            .map((image) => $(image).attr('src'))
+            .filter((src) => Boolean(src))
+            .map((src) => this.resolveUrl(src, baseUrl))
+            .filter((src) => Boolean(src));
     }
 };
 exports.ParserService = ParserService;

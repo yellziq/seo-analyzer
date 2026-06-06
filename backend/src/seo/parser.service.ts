@@ -43,6 +43,41 @@ export type ParsedSeoData = {
     length: number;
     htmlLength: number;
     ratio: number;
+    wordCount: number;
+  };
+  viewport: {
+    content: string | null;
+  };
+  favicon: {
+    href: string | null;
+  };
+  schemaOrg: {
+    count: number;
+  };
+  hreflang: {
+    count: number;
+  };
+  links: {
+    totalCount: number;
+    internalCount: number;
+    externalCount: number;
+    urls: string[];
+  };
+  duplicateHeadings: {
+    count: number;
+    values: string[];
+  };
+  imageSize: {
+    oversizedCount: number;
+    urls: string[];
+  };
+  technicalFiles: {
+    robotsTxt: boolean | null;
+    sitemapXml: boolean | null;
+  };
+  brokenLinks: {
+    checkedCount: number;
+    brokenCount: number;
   };
   isHttps: boolean;
 };
@@ -65,6 +100,11 @@ export class ParserService {
     const textContent = this.extractTextContent($);
     const htmlLength = html.length;
     const textToHtmlRatio = htmlLength > 0 ? textContent.length / htmlLength : 0;
+    const baseUrl = url ? new URL(url) : null;
+    const links = this.extractLinks($, baseUrl);
+    const imageUrls = this.extractImageUrls($, baseUrl);
+    const duplicateHeadings = this.extractDuplicateHeadings($);
+    const oversizedImagesByAttributes = this.countOversizedImagesByAttributes($);
 
     const totalImages = $('img').length;
     const imagesWithoutAlt = $('img')
@@ -118,6 +158,37 @@ export class ParserService {
         length: textContent.length,
         htmlLength,
         ratio: Number(textToHtmlRatio.toFixed(3)),
+        wordCount: this.countWords(textContent),
+      },
+      viewport: {
+        content: this.cleanText($('meta[name="viewport"]').attr('content')),
+      },
+      favicon: {
+        href: this.cleanText(
+          $('link[rel="icon"], link[rel="shortcut icon"], link[rel="apple-touch-icon"]')
+            .first()
+            .attr('href'),
+        ),
+      },
+      schemaOrg: {
+        count: $('script[type="application/ld+json"]').length,
+      },
+      hreflang: {
+        count: $('link[rel="alternate"][hreflang]').length,
+      },
+      links,
+      duplicateHeadings,
+      imageSize: {
+        oversizedCount: oversizedImagesByAttributes,
+        urls: imageUrls,
+      },
+      technicalFiles: {
+        robotsTxt: null,
+        sitemapXml: null,
+      },
+      brokenLinks: {
+        checkedCount: 0,
+        brokenCount: 0,
       },
       isHttps: url ? new URL(url).protocol === 'https:' : false,
     };
@@ -133,5 +204,92 @@ export class ParserService {
     body.find('script, style, noscript, svg').remove();
 
     return body.text().trim().replace(/\s+/g, ' ');
+  }
+
+  private countWords(text: string): number {
+    if (!text) {
+      return 0;
+    }
+
+    return text.split(/\s+/).filter(Boolean).length;
+  }
+
+  private extractLinks(
+    $: cheerio.CheerioAPI,
+    baseUrl: URL | null,
+  ): ParsedSeoData['links'] {
+    const urls = $('a[href]')
+      .toArray()
+      .map((link) => $(link).attr('href'))
+      .filter((href): href is string => Boolean(href))
+      .filter((href) => !href.startsWith('#') && !href.startsWith('mailto:') && !href.startsWith('tel:'))
+      .map((href) => this.resolveUrl(href, baseUrl))
+      .filter((href): href is string => Boolean(href));
+
+    const internalCount = urls.filter((href) => {
+      if (!baseUrl) {
+        return !/^https?:\/\//i.test(href);
+      }
+
+      return new URL(href).hostname === baseUrl.hostname;
+    }).length;
+
+    return {
+      totalCount: urls.length,
+      internalCount,
+      externalCount: urls.length - internalCount,
+      urls,
+    };
+  }
+
+  private resolveUrl(href: string, baseUrl: URL | null): string | null {
+    try {
+      return baseUrl ? new URL(href, baseUrl).toString() : href;
+    } catch {
+      return null;
+    }
+  }
+
+  private extractDuplicateHeadings(
+    $: cheerio.CheerioAPI,
+  ): ParsedSeoData['duplicateHeadings'] {
+    const headings = $('h1, h2, h3, h4, h5, h6')
+      .toArray()
+      .map((heading) => this.cleanText($(heading).text())?.toLowerCase())
+      .filter((heading): heading is string => Boolean(heading));
+    const counts = new Map<string, number>();
+
+    headings.forEach((heading) => {
+      counts.set(heading, (counts.get(heading) ?? 0) + 1);
+    });
+
+    const values = Array.from(counts.entries())
+      .filter(([, count]) => count > 1)
+      .map(([heading]) => heading);
+
+    return {
+      count: values.length,
+      values,
+    };
+  }
+
+  private countOversizedImagesByAttributes($: cheerio.CheerioAPI): number {
+    return $('img')
+      .toArray()
+      .filter((image) => {
+        const width = Number($(image).attr('width') ?? 0);
+        const height = Number($(image).attr('height') ?? 0);
+
+        return width > 2000 || height > 2000;
+      }).length;
+  }
+
+  private extractImageUrls($: cheerio.CheerioAPI, baseUrl: URL | null): string[] {
+    return $('img[src]')
+      .toArray()
+      .map((image) => $(image).attr('src'))
+      .filter((src): src is string => Boolean(src))
+      .map((src) => this.resolveUrl(src, baseUrl))
+      .filter((src): src is string => Boolean(src));
   }
 }

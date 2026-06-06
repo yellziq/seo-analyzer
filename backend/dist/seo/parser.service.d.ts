@@ -40,6 +40,41 @@ export type ParsedSeoData = {
         length: number;
         htmlLength: number;
         ratio: number;
+        wordCount: number;
+    };
+    viewport: {
+        content: string | null;
+    };
+    favicon: {
+        href: string | null;
+    };
+    schemaOrg: {
+        count: number;
+    };
+    hreflang: {
+        count: number;
+    };
+    links: {
+        totalCount: number;
+        internalCount: number;
+        externalCount: number;
+        urls: string[];
+    };
+    duplicateHeadings: {
+        count: number;
+        values: string[];
+    };
+    imageSize: {
+        oversizedCount: number;
+        urls: string[];
+    };
+    technicalFiles: {
+        robotsTxt: boolean | null;
+        sitemapXml: boolean | null;
+    };
+    brokenLinks: {
+        checkedCount: number;
+        brokenCount: number;
     };
     isHttps: boolean;
 };
@@ -47,4 +82,10 @@ export declare class ParserService {
     parse(html: string, url?: string): ParsedSeoData;
     private cleanText;
     private extractTextContent;
+    private countWords;
+    private extractLinks;
+    private resolveUrl;
+    private extractDuplicateHeadings;
+    private countOversizedImagesByAttributes;
+    private extractImageUrls;
 }

@@ -15,4 +15,6 @@ export declare class SeoService {
     private readonly aiService;
     constructor(scraperService: ScraperService, parserService: ParserService, scorerService: ScorerService, aiService: AiService);
     analyze(payload: AnalyzeSeoDto): Promise<SeoAnalyzeResult>;
+    private createUrlFetchFailureResult;
+    private extractErrorMessage;
 }

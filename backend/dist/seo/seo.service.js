@@ -30,13 +30,36 @@ let SeoService = class SeoService {
         if (!payload.url && !payload.html) {
             throw new common_1.BadRequestException('Передайте URL или HTML.');
         }
-        const html = payload.url
-            ? await this.scraperService.fetchHtml(payload.url)
-            : payload.html;
+        let html;
+        if (payload.url) {
+            try {
+                html = await this.scraperService.fetchHtml(payload.url);
+            }
+            catch (error) {
+                return this.createUrlFetchFailureResult(payload.url, error);
+            }
+        }
+        else {
+            html = payload.html;
+        }
         if (!html) {
             throw new common_1.BadRequestException('HTML-контент пустой.');
         }
         const parsedData = this.parserService.parse(html, payload.url);
+        if (payload.url) {
+            const [robotsTxt, sitemapXml, brokenLinks, largeImagesCount] = await Promise.all([
+                this.scraperService.checkTechnicalFile(payload.url, 'robots.txt'),
+                this.scraperService.checkTechnicalFile(payload.url, 'sitemap.xml'),
+                this.scraperService.checkLinks(parsedData.links.urls),
+                this.scraperService.countLargeImages(parsedData.imageSize.urls),
+            ]);
+            parsedData.technicalFiles = {
+                robotsTxt,
+                sitemapXml,
+            };
+            parsedData.brokenLinks = brokenLinks;
+            parsedData.imageSize.oversizedCount += largeImagesCount;
+        }
         const { score, checks } = this.scorerService.score(parsedData);
         const aiReview = await this.aiService.generateReview(checks);
         return {
@@ -44,6 +67,43 @@ let SeoService = class SeoService {
             checks,
             aiReview,
         };
+    }
+    async createUrlFetchFailureResult(url, error) {
+        const reason = this.extractErrorMessage(error);
+        const checks = [
+            {
+                tag: 'URL Fetch',
+                status: 'Failed',
+                description: `Не удалось загрузить HTML по адресу ${url}. Причина: ${reason}. Вставьте HTML-код страницы вручную или попробуйте другой URL.`,
+            },
+        ];
+        const aiReview = await this.aiService.generateReview(checks);
+        return {
+            score: 0,
+            checks,
+            aiReview,
+        };
+    }
+    extractErrorMessage(error) {
+        if (!(error instanceof common_1.HttpException)) {
+            return 'Неизвестная ошибка загрузки.';
+        }
+        const response = error.getResponse();
+        if (typeof response === 'string') {
+            return response;
+        }
+        if (typeof response === 'object' &&
+            response !== null &&
+            'message' in response) {
+            const message = response.message;
+            if (Array.isArray(message)) {
+                return message.join(', ');
+            }
+            if (typeof message === 'string') {
+                return message;
+            }
+        }
+        return error.message;
     }
 };
 exports.SeoService = SeoService;
