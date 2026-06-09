@@ -45,6 +45,7 @@ const cheerio = __importStar(require("cheerio"));
 let ParserService = class ParserService {
     parse(html, url) {
         const $ = cheerio.load(html);
+        const normalizedUrl = this.normalizeUrl(url);
         const titleText = this.cleanText($('title').first().text());
         const metaDescription = this.cleanText($('meta[name="description"]').attr('content'));
         const h1Elements = $('h1');
@@ -55,7 +56,7 @@ let ParserService = class ParserService {
         const textContent = this.extractTextContent($);
         const htmlLength = html.length;
         const textToHtmlRatio = htmlLength > 0 ? textContent.length / htmlLength : 0;
-        const baseUrl = url ? new URL(url) : null;
+        const baseUrl = normalizedUrl ? new URL(normalizedUrl) : null;
         const links = this.extractLinks($, baseUrl);
         const imageUrls = this.extractImageUrls($, baseUrl);
         const duplicateHeadings = this.extractDuplicateHeadings($);
@@ -99,8 +100,8 @@ let ParserService = class ParserService {
                 withoutAltCount: imagesWithoutAlt,
             },
             url: {
-                value: url ?? null,
-                length: url?.length ?? 0,
+                value: normalizedUrl,
+                length: normalizedUrl?.length ?? 0,
             },
             htmlLang: {
                 value: htmlLang,
@@ -139,12 +140,23 @@ let ParserService = class ParserService {
                 checkedCount: 0,
                 brokenCount: 0,
             },
-            isHttps: url ? new URL(url).protocol === 'https:' : false,
+            isHttps: normalizedUrl ? new URL(normalizedUrl).protocol === 'https:' : false,
         };
     }
     cleanText(value) {
         const text = value?.trim().replace(/\s+/g, ' ');
         return text ? text : null;
+    }
+    normalizeUrl(value) {
+        if (!value) {
+            return null;
+        }
+        try {
+            return new URL(value).toString();
+        }
+        catch {
+            return null;
+        }
     }
     extractTextContent($) {
         const body = $('body').clone();
@@ -167,7 +179,7 @@ let ParserService = class ParserService {
             .filter((href) => Boolean(href));
         const internalCount = urls.filter((href) => {
             if (!baseUrl) {
-                return !/^https?:\/\//i.test(href);
+                return href.startsWith('/') || !/^[a-z][a-z\d+\-.]*:/i.test(href);
             }
             return new URL(href).hostname === baseUrl.hostname;
         }).length;

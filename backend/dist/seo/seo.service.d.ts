@@ -17,4 +17,5 @@ export declare class SeoService {
     analyze(payload: AnalyzeSeoDto): Promise<SeoAnalyzeResult>;
     private createUrlFetchFailureResult;
     private extractErrorMessage;
+    private enrichWithUrlChecks;
 }

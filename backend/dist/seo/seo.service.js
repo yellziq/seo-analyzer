@@ -47,18 +47,7 @@ let SeoService = class SeoService {
         }
         const parsedData = this.parserService.parse(html, payload.url);
         if (payload.url) {
-            const [robotsTxt, sitemapXml, brokenLinks, largeImagesCount] = await Promise.all([
-                this.scraperService.checkTechnicalFile(payload.url, 'robots.txt'),
-                this.scraperService.checkTechnicalFile(payload.url, 'sitemap.xml'),
-                this.scraperService.checkLinks(parsedData.links.urls),
-                this.scraperService.countLargeImages(parsedData.imageSize.urls),
-            ]);
-            parsedData.technicalFiles = {
-                robotsTxt,
-                sitemapXml,
-            };
-            parsedData.brokenLinks = brokenLinks;
-            parsedData.imageSize.oversizedCount += largeImagesCount;
+            await this.enrichWithUrlChecks(parsedData, payload.url);
         }
         const { score, checks } = this.scorerService.score(parsedData);
         const aiReview = await this.aiService.generateReview(checks);
@@ -104,6 +93,20 @@ let SeoService = class SeoService {
             }
         }
         return error.message;
+    }
+    async enrichWithUrlChecks(parsedData, url) {
+        const [robotsTxt, sitemapXml, brokenLinks, largeImagesCount] = await Promise.all([
+            this.scraperService.checkTechnicalFile(url, 'robots.txt'),
+            this.scraperService.checkTechnicalFile(url, 'sitemap.xml'),
+            this.scraperService.checkLinks(parsedData.links.urls),
+            this.scraperService.countLargeImages(parsedData.imageSize.urls),
+        ]);
+        parsedData.technicalFiles = {
+            robotsTxt,
+            sitemapXml,
+        };
+        parsedData.brokenLinks = brokenLinks;
+        parsedData.imageSize.oversizedCount += largeImagesCount;
     }
 };
 exports.SeoService = SeoService;

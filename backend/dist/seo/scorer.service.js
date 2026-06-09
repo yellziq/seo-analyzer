@@ -246,6 +246,13 @@ let ScorerService = class ScorerService {
         };
     }
     scoreHttps(data) {
+        if (!data.url.value) {
+            return {
+                tag: 'HTTPS',
+                status: 'Warning',
+                description: 'HTTPS не проверялся, потому что анализ выполнен по HTML без URL.',
+            };
+        }
         if (data.isHttps) {
             return {
                 tag: 'HTTPS',
@@ -264,8 +271,8 @@ let ScorerService = class ScorerService {
         if (!value) {
             return {
                 tag: 'URL Length',
-                status: 'Passed',
-                description: 'URL не был передан, поэтому проверка длины URL не применяется.',
+                status: 'Warning',
+                description: 'Длина URL не проверялась, потому что анализ выполнен по HTML без URL.',
             };
         }
         if (length <= 75) {
@@ -365,8 +372,8 @@ let ScorerService = class ScorerService {
         if (data.technicalFiles.robotsTxt === null) {
             return {
                 tag: 'Robots.txt',
-                status: 'Passed',
-                description: 'URL не был передан, поэтому robots.txt не проверялся.',
+                status: 'Warning',
+                description: 'Robots.txt не проверялся, потому что анализ выполнен по HTML без URL.',
             };
         }
         if (data.technicalFiles.robotsTxt) {
@@ -386,8 +393,8 @@ let ScorerService = class ScorerService {
         if (data.technicalFiles.sitemapXml === null) {
             return {
                 tag: 'Sitemap.xml',
-                status: 'Passed',
-                description: 'URL не был передан, поэтому sitemap.xml не проверялся.',
+                status: 'Warning',
+                description: 'Sitemap.xml не проверялся, потому что анализ выполнен по HTML без URL.',
             };
         }
         if (data.technicalFiles.sitemapXml) {
@@ -422,8 +429,10 @@ let ScorerService = class ScorerService {
         if (checkedCount === 0) {
             return {
                 tag: 'Broken Links',
-                status: 'Passed',
-                description: 'Ссылки не проверялись: URL не был передан или ссылок на странице нет.',
+                status: data.links.totalCount === 0 ? 'Passed' : 'Warning',
+                description: data.links.totalCount === 0
+                    ? 'На странице нет ссылок, поэтому битые ссылки не проверялись.'
+                    : 'Битые ссылки не проверялись, потому что анализ выполнен по HTML без URL.',
             };
         }
         if (brokenCount === 0) {
@@ -549,6 +558,13 @@ let ScorerService = class ScorerService {
             };
         }
         if (data.imageSize.oversizedCount === 0) {
+            if (!data.url.value && data.imageSize.urls.length > 0) {
+                return {
+                    tag: 'Large Images',
+                    status: 'Warning',
+                    description: 'Размер файлов изображений не проверялся, потому что анализ выполнен по HTML без URL. Проверены только width/height атрибуты.',
+                };
+            }
             return {
                 tag: 'Large Images',
                 status: 'Passed',

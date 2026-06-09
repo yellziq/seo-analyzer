@@ -86,6 +86,7 @@ export type ParsedSeoData = {
 export class ParserService {
   parse(html: string, url?: string): ParsedSeoData {
     const $ = cheerio.load(html);
+    const normalizedUrl = this.normalizeUrl(url);
     const titleText = this.cleanText($('title').first().text());
     const metaDescription = this.cleanText(
       $('meta[name="description"]').attr('content'),
@@ -100,7 +101,7 @@ export class ParserService {
     const textContent = this.extractTextContent($);
     const htmlLength = html.length;
     const textToHtmlRatio = htmlLength > 0 ? textContent.length / htmlLength : 0;
-    const baseUrl = url ? new URL(url) : null;
+    const baseUrl = normalizedUrl ? new URL(normalizedUrl) : null;
     const links = this.extractLinks($, baseUrl);
     const imageUrls = this.extractImageUrls($, baseUrl);
     const duplicateHeadings = this.extractDuplicateHeadings($);
@@ -148,8 +149,8 @@ export class ParserService {
         withoutAltCount: imagesWithoutAlt,
       },
       url: {
-        value: url ?? null,
-        length: url?.length ?? 0,
+        value: normalizedUrl,
+        length: normalizedUrl?.length ?? 0,
       },
       htmlLang: {
         value: htmlLang,
@@ -190,13 +191,25 @@ export class ParserService {
         checkedCount: 0,
         brokenCount: 0,
       },
-      isHttps: url ? new URL(url).protocol === 'https:' : false,
+      isHttps: normalizedUrl ? new URL(normalizedUrl).protocol === 'https:' : false,
     };
   }
 
   private cleanText(value?: string): string | null {
     const text = value?.trim().replace(/\s+/g, ' ');
     return text ? text : null;
+  }
+
+  private normalizeUrl(value?: string): string | null {
+    if (!value) {
+      return null;
+    }
+
+    try {
+      return new URL(value).toString();
+    } catch {
+      return null;
+    }
   }
 
   private extractTextContent($: cheerio.CheerioAPI): string {
@@ -228,7 +241,7 @@ export class ParserService {
 
     const internalCount = urls.filter((href) => {
       if (!baseUrl) {
-        return !/^https?:\/\//i.test(href);
+        return href.startsWith('/') || !/^[a-z][a-z\d+\-.]*:/i.test(href);
       }
 
       return new URL(href).hostname === baseUrl.hostname;

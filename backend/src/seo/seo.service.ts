@@ -1,7 +1,7 @@
 import { BadRequestException, HttpException, Injectable } from '@nestjs/common';
 import { AiService } from './ai.service';
 import { AnalyzeSeoDto } from './seo.controller';
-import { ParserService } from './parser.service';
+import { ParsedSeoData, ParserService } from './parser.service';
 import { ScorerService, SeoCheck } from './scorer.service';
 import { ScraperService } from './scraper.service';
 
@@ -44,20 +44,7 @@ export class SeoService {
     const parsedData = this.parserService.parse(html, payload.url);
 
     if (payload.url) {
-      const [robotsTxt, sitemapXml, brokenLinks, largeImagesCount] =
-        await Promise.all([
-          this.scraperService.checkTechnicalFile(payload.url, 'robots.txt'),
-          this.scraperService.checkTechnicalFile(payload.url, 'sitemap.xml'),
-          this.scraperService.checkLinks(parsedData.links.urls),
-          this.scraperService.countLargeImages(parsedData.imageSize.urls),
-        ]);
-
-      parsedData.technicalFiles = {
-        robotsTxt,
-        sitemapXml,
-      };
-      parsedData.brokenLinks = brokenLinks;
-      parsedData.imageSize.oversizedCount += largeImagesCount;
+      await this.enrichWithUrlChecks(parsedData, payload.url);
     }
 
     const { score, checks } = this.scorerService.score(parsedData);
@@ -119,5 +106,25 @@ export class SeoService {
     }
 
     return error.message;
+  }
+
+  private async enrichWithUrlChecks(
+    parsedData: ParsedSeoData,
+    url: string,
+  ): Promise<void> {
+    const [robotsTxt, sitemapXml, brokenLinks, largeImagesCount] =
+      await Promise.all([
+        this.scraperService.checkTechnicalFile(url, 'robots.txt'),
+        this.scraperService.checkTechnicalFile(url, 'sitemap.xml'),
+        this.scraperService.checkLinks(parsedData.links.urls),
+        this.scraperService.countLargeImages(parsedData.imageSize.urls),
+      ]);
+
+    parsedData.technicalFiles = {
+      robotsTxt,
+      sitemapXml,
+    };
+    parsedData.brokenLinks = brokenLinks;
+    parsedData.imageSize.oversizedCount += largeImagesCount;
   }
 }

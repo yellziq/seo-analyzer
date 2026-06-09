@@ -81,6 +81,7 @@ export type ParsedSeoData = {
 export declare class ParserService {
     parse(html: string, url?: string): ParsedSeoData;
     private cleanText;
+    private normalizeUrl;
     private extractTextContent;
     private countWords;
     private extractLinks;
