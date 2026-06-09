@@ -5,7 +5,7 @@
     "dev": "npm --prefix frontend run dev",
     "build": "npm --prefix frontend run build",
     "test": "npm --prefix frontend run test",
-    "start": "npm --prefix frontend start",
+    "start": "npm --prefix frontend run build && npm --prefix frontend start",
     "server": "npm --prefix backend run server",
     "backend": "npm --prefix backend run server",
     "frontend": "npm --prefix frontend run dev"
